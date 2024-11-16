@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Stream</title>
+</head>
+<body>
+<h1>Live Stream</h1>
+<video id="hostVideo" autoplay></video>
+<video id="viewerVideo" autoplay></video>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  // Host
+  const hostVideo = document.getElementById('hostVideo');
+  navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            hostVideo.srcObject = stream;
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+              socket.emit('stream', event.data);
+            };
+            mediaRecorder.start(100);
+          });
+
+  // Viewer
+  const viewerVideo = document.getElementById('viewerVideo');
+  socket.on('stream', (image) => {
+    const blob = new Blob([image], { type: 'video/webm' });
+    viewerVideo.src = URL.createObjectURL(blob);
+  });
+</script>
+</body>
+</html>
